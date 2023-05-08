@@ -25,7 +25,7 @@ bVista := (DllCall("GetVersion") & 0xFF >= 6)
 logFile := 0
 
 ;Create GUI
-Gui +LastFound -Resize -MaximizeBox -MinimizeBox
+Gui +LastFound -Resize
 Gui, Add, Text, x6 y10 w80 h20, Usage&Page
 Gui, Add, Edit, x86 y10 w100 h20 Number vtxtUsPg
 Gui, Add, Text, x6 y30 w80 h20, &Usage
@@ -64,12 +64,28 @@ AHKHID_UseConstants()
 ;Intercept WM_INPUT
 OnMessage(0x00FF, "InputMsg")
 
+Menu, Tray, Add, Restore, Restore
+Menu, Tray, default, Restore
+Menu, Tray, Click, 2
+
 ;Show GUI
 Gui, Show
 CreateAndOpenSessionFile()
 AutoStart()
 SetTimer RefreshFilesTimer, 10000
+WinHide
 Return
+
+GuiSize:
+  if (A_EventInfo = 1)
+    WinHide
+  return
+
+Restore:
+  gui +lastfound
+  WinShow
+  WinRestore
+  return
 
 GuiClose:
     if IsObject(logFile)
