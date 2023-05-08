@@ -18,7 +18,7 @@
     Then press Add and then Call to register.
 */
 #SingleInstance force
-#include AHKHID.ahk
+#include <AHKHID>
 
 ;Check if the OS is Windows Vista or higher
 bVista := (DllCall("GetVersion") & 0xFF >= 6)
