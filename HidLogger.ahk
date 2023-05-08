@@ -103,6 +103,8 @@ CreateAndOpenSessionFile(){
         MsgBox Can't open "%fileName%" for writing.
         return
     }
+
+    LogAsCsv("Process","MakeCode","Flags","VKey","KeyboardMessage","KeyboardExtraInfo")
 }
 
 btnAdd_Event:
@@ -223,22 +225,34 @@ InputMsg(wParam, lParam) {
     r := AHKHID_GetInputInfo(lParam, II_DEVTYPE)
     If (r = -1){
         OutputDebug %ErrorLevel%
-        message := ErrorLevel
+        LogToFile(ErrorLevel)
     } Else If (r = RIM_TYPEKEYBOARD) {
-        message := ""
-        . " Process: "      proc
-        . ", MakeCode: "    AHKHID_GetInputInfo(lParam, II_KBD_MAKECODE)
-        . ", Flags: "       AHKHID_GetInputInfo(lParam, II_KBD_FLAGS)
-        . ", VKey: "        AHKHID_GetInputInfo(lParam, II_KBD_VKEY)
-        . ", Message: "     AHKHID_GetInputInfo(lParam, II_KBD_MSG)
-        . ", ExtraInfo: "   AHKHID_GetInputInfo(lParam, II_KBD_EXTRAINFO)
-        GuiControl,, lbxInput, % message
-    }
+        makeCode :=  AHKHID_GetInputInfo(lParam, II_KBD_MAKECODE)
+        flags := AHKHID_GetInputInfo(lParam, II_KBD_FLAGS)
+        vKey := AHKHID_GetInputInfo(lParam, II_KBD_VKEY)
+        kbdMsg := AHKHID_GetInputInfo(lParam, II_KBD_MSG)
+        kbdExtra := AHKHID_GetInputInfo(lParam, II_KBD_EXTRAINFO)
 
-    LogToFile(message)
+        GuiControl,, lbxInput, % ""
+        . " Process: "     proc
+        . " MakeCode: "    makeCode
+        . " Flags: "       flags
+        . " VKey: "        vKey
+        . " Keyboard Message: "     kbdMessage
+        . " Keyboard Extra Info: "   kbdExtra
+
+        LogAsCsv(proc, makeCode, flags, vKey, kbdMsg, kbdExtra)
+    }
 
     SendMessage, 0x018B, 0, 0,, ahk_id %hlbxInput%
     SendMessage, 0x0186, ErrorLevel - 1, 0,, ahk_id %hlbxInput%
+}
+
+LogAsCsv(params*){
+    for index,param in params
+        str .= param . ","
+
+    LogToFile(str)
 }
 
 LogToFile(message){
