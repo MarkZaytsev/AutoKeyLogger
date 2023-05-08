@@ -22,6 +22,7 @@
 
 ;Check if the OS is Windows Vista or higher
 bVista := (DllCall("GetVersion") & 0xFF >= 6)
+logFile := 0
 
 ;Create GUI
 Gui +LastFound -Resize -MaximizeBox -MinimizeBox
@@ -30,7 +31,7 @@ Gui, Add, Edit, x86 y10 w100 h20 Number vtxtUsPg
 Gui, Add, Text, x6 y30 w80 h20, &Usage
 Gui, Add, Edit, x86 y30 w100 h20 Number vtxtUs
 Gui, Add, Text, x6 y50 w80 h20, &Log file path
-Gui, Add, Edit, x86 y50 w100 h20 vLogFilePath,c:\Work\AutoKeyLogger\KeyLogs.log
+Gui, Add, Edit, x86 y50 w100 h20 vLogsDirPath,c:\Work\AutoKeyLogger\Logs
 Gui, Add, GroupBox, x6 y65 w180 h210, &Flags
 Gui, Add, CheckBox, x16 y80 w160 h20 vchkAPPKEYS, RIDEV_APPKEYS
 Gui, Add, CheckBox, x16 y100 w160 h20 vchkCAPTUREMOUSE, RIDEV_CAPTUREMOUSE
@@ -65,10 +66,14 @@ OnMessage(0x00FF, "InputMsg")
 
 ;Show GUI
 Gui, Show
+CreateAndOpenSessionFile()
 AutoStart()
+SetTimer RefreshFilesTimer, 10000
 Return
 
 GuiClose:
+    if IsObject(logFile)
+        logFile.Close()
 ExitApp
 
 AutoStart(){
@@ -77,6 +82,27 @@ AutoStart(){
 
     Add(1, 6, flags)
     Gosub btnCall_Event
+}
+
+CreateAndOpenSessionFile(){
+    ;Get vars
+    Gui, Submit, NoHide
+
+    global LogsDirPath, logFile
+
+    fileName := LogsDirPath
+    . "\"
+    . A_YYYY . "_" . A_MM . "_" . A_DD
+    . " "
+    . A_Hour . "_" . A_Min . "_" . A_Sec
+    . ".log"
+
+    logFile := FileOpen(fileName, "w")
+    if !IsObject(logFile)
+    {
+        MsgBox Can't open "%fileName%" for writing.
+        return
+    }
 }
 
 btnAdd_Event:
@@ -216,9 +242,12 @@ InputMsg(wParam, lParam) {
 }
 
 LogToFile(message){
-    ;Get vars
-    Gui, Submit, NoHide
-
-    global LogFilePath
-    FileAppend, %A_YYYY%/%A_MM%/%A_DD%`, %A_Hour%:%A_Min%:%A_Sec%`,%message%`n, %LogFilePath%
+    global logFile
+    logFile.Write(message . "`n")
 }
+
+RefreshFilesTimer:
+    if IsObject(logFile){
+        logFile.__Handle
+    }
+Return
